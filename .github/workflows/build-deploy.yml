@@ -1,0 +1,88 @@
+name: Build and Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+env:
+  FLY_APP: hello-go-sparkling-fire-6249
+  REGISTRY: registry.fly.io
+
+jobs:
+  build:
+    name: Build and Push
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate version
+        id: version
+        run: |
+          # Get latest tag or start at v1.0.0
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+
+          # Parse version components
+          VERSION=${LATEST_TAG#v}
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          MINOR=$(echo $VERSION | cut -d. -f2)
+          PATCH=$(echo $VERSION | cut -d. -f3)
+
+          # Increment patch version
+          PATCH=$((PATCH + 1))
+          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Setup Fly CLI
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Authenticate to Fly Registry
+        run: flyctl auth docker
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Build Docker image
+        run: |
+          docker build -f build/Dockerfile \
+            -t ${{ env.REGISTRY }}/${{ env.FLY_APP }}:${{ steps.version.outputs.version }} \
+            -t ${{ env.REGISTRY }}/${{ env.FLY_APP }}:latest \
+            .
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ env.FLY_APP }}:${{ steps.version.outputs.version }}
+          docker push ${{ env.REGISTRY }}/${{ env.FLY_APP }}:latest
+
+      - name: Create Git tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a ${{ steps.version.outputs.version }} -m "Release ${{ steps.version.outputs.version }}"
+          git push origin ${{ steps.version.outputs.version }}
+
+  deploy:
+    name: Deploy to Fly.io
+    runs-on: ubuntu-latest
+    needs: build
+    concurrency: deploy-group
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Fly CLI
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        run: |
+          flyctl deploy \
+            --image ${{ env.REGISTRY }}/${{ env.FLY_APP }}:${{ needs.build.outputs.version }} \
+            --app ${{ env.FLY_APP }}
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
