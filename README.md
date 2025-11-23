@@ -56,7 +56,7 @@ curl localhost:8080/health
 
 ## Requirements
 
-- Go 1.25+
+- Go 1.24+
 - golangci-lint (for linting)
 - goimports (for formatting)
 
