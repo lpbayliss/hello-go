@@ -2,6 +2,19 @@
 
 Lightweight Go HTTP service with hello and health endpoints.
 
+## Project Structure
+
+```
+├── cmd/server/          # Application entrypoint
+├── internal/
+│   ├── config/          # Configuration loading
+│   ├── greeting/        # Business logic
+│   └── handler/         # HTTP handlers
+├── build/               # Dockerfile
+├── .golangci.yml        # Linter config
+└── Makefile             # Build commands
+```
+
 ## Endpoints
 
 - `GET /hello` - Returns greeting message
@@ -46,3 +59,10 @@ curl localhost:8080/health
 - Go 1.25+
 - golangci-lint (for linting)
 - goimports (for formatting)
+
+### Install tools
+
+```bash
+brew install golangci-lint
+go install golang.org/x/tools/cmd/goimports@latest
+```

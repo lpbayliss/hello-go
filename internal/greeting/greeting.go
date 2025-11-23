@@ -8,9 +8,9 @@ import (
 )
 
 var (
-	ErrNameEmpty    = errors.New("name cannot be empty")
-	ErrNameTooLong  = errors.New("name cannot exceed 100 characters")
-	ErrNameInvalid  = errors.New("name contains invalid characters")
+	ErrNameEmpty   = errors.New("name cannot be empty")
+	ErrNameTooLong = errors.New("name cannot exceed 100 characters")
+	ErrNameInvalid = errors.New("name contains invalid characters")
 )
 
 // ValidateName checks if a name is valid for greeting

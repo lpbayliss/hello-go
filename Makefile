@@ -2,11 +2,11 @@
 
 # Build the application
 build:
-	go build -o bin/server .
+	go build -o bin/server ./cmd/server
 
 # Run the application locally
 run:
-	go run .
+	go run ./cmd/server
 
 # Run all tests
 test:
@@ -20,7 +20,7 @@ test-coverage:
 # Format code
 fmt:
 	gofmt -w .
-	goimports -w .
+	@command -v goimports >/dev/null 2>&1 && goimports -w . || echo "goimports not installed, skipping"
 
 # Run linter
 lint:
@@ -33,7 +33,7 @@ clean:
 
 # Build Docker image
 docker-build:
-	docker build -t hello-go .
+	docker build -f build/Dockerfile -t hello-go .
 
 # Run Docker container
 docker-run:
