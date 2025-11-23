@@ -1,5 +1,3 @@
-version: "2"
-
 run:
   timeout: 5m
 
@@ -13,19 +11,14 @@ linters:
     - misspell
     - unconvert
     - unparam
-
-formatters:
-  enable:
     - gofmt
     - goimports
-  settings:
-    goimports:
-      local-prefixes:
-        - hello-go
 
 linters-settings:
   misspell:
     locale: US
+  goimports:
+    local-prefixes: hello-go
 
 issues:
   exclude-use-default: false
